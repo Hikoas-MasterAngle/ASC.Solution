@@ -20,4 +20,5 @@ namespace ASC.Model.Models
         public bool IsActive { get; set; }
         public string Name { get; set; }
     }
+
 }

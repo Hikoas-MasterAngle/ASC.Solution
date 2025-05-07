@@ -1,76 +1,80 @@
-﻿using ASC.Model.BaseTypes;
-using ASC.WEB.Configuration;
+﻿using ASC.Model;
+using ASC.Model.BaseTypes;
+using ASC.Web.Configuration;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Logging;
-
-namespace ASC.WEB.Data
+namespace ASC.Web.Data
 {
     public class IdentitySeed : IIdentitySeed
     {
-        private readonly ILogger<IdentitySeed> _logger;
-
-        public IdentitySeed(ILogger<IdentitySeed> logger)
-        {
-            _logger = logger;
-        }
-
-        public async Task Seed(UserManager<IdentityUser> userManager,
-                               RoleManager<IdentityRole> roleManager,
+        public async Task Seed(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager,
                                IOptions<ApplicationSettings> options)
         {
-            var roles = options.Value.Roles?.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
+            // Get all comma-separated roles
+            var roles = options.Value.Roles.Split(new char[] { ',' });
 
+            // Create roles if they don’t exist
             foreach (var role in roles)
             {
                 try
                 {
-                    if (!await roleManager.RoleExistsAsync(role))
+                    if (!roleManager.RoleExistsAsync(role).Result)
                     {
-                        IdentityRole storageRole = new IdentityRole { Name = role };
-                        IdentityResult roleResult = await roleManager.CreateAsync(storageRole);
-
-                        if (!roleResult.Succeeded)
+                        IdentityRole storageRole = new IdentityRole
                         {
-                            _logger.LogError("Lỗi khi tạo vai trò {Role}: {Errors}", role, string.Join(", ", roleResult.Errors.Select(e => e.Description)));
-                        }
+                            Name = role
+                        };
+
+                        IdentityResult roleResult = await roleManager.CreateAsync(storageRole);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Lỗi khi tạo vai trò {Role}", role);
+                    Console.WriteLine(ex);
                 }
             }
-
-            await CreateUserIfNotExists(userManager, options.Value.AdminEmail, options.Value.AdminName, options.Value.AdminPassword, Roles.Admin.ToString());
-            await CreateUserIfNotExists(userManager, options.Value.EngineerEmail, options.Value.EngineerName, options.Value.EngineerPassword, Roles.Engineer.ToString());
-            
-        }
-
-        private async Task CreateUserIfNotExists(UserManager<IdentityUser> userManager, string email, string username, string password, string role)
-        {
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password)) return;
-
-            var user = await userManager.FindByEmailAsync(email);
-            if (user == null)
+            // Create admin if he doesn’t exist
+            var admin = await userManager.FindByEmailAsync(options.Value.AdminEmail);
+            if (admin == null)
             {
-                user = new IdentityUser
+                IdentityUser user = new IdentityUser
                 {
-                    UserName = username,
-                    Email = email,
+                    UserName = options.Value.AdminName,
+                    Email = options.Value.AdminEmail,
                     EmailConfirmed = true
                 };
 
-                var result = await userManager.CreateAsync(user, password);
+                IdentityResult result = await userManager.CreateAsync(user, options.Value.AdminPassword);
+                await userManager.AddClaimAsync(user, new System.Security.Claims.Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", options.Value.AdminEmail));
+                await userManager.AddClaimAsync(user, new System.Security.Claims.Claim("IsActive", "True"));
+
+                // Add Admin to Admin roles
                 if (result.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(user, role);
-                    await userManager.AddClaimAsync(user, new System.Security.Claims.Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", email));
-                    await userManager.AddClaimAsync(user, new System.Security.Claims.Claim("IsActive", "True"));
+                    await userManager.AddToRoleAsync(user, Roles.Admin.ToString());
                 }
-                else
+            }
+
+            // Create a service engineer if he doesn’t exist
+            var engineer = await userManager.FindByEmailAsync(options.Value.EngineerEmail);
+            if (engineer == null)
+            {
+                IdentityUser user = new IdentityUser
                 {
-                    _logger.LogError("Lỗi khi tạo người dùng {Email}: {Errors}", email, string.Join(", ", result.Errors.Select(e => e.Description)));
+                    UserName = options.Value.EngineerName,
+                    Email = options.Value.EngineerEmail,
+                    EmailConfirmed = true,
+                    LockoutEnabled = false
+                };
+
+                IdentityResult result = await userManager.CreateAsync(user, options.Value.EngineerPassword);
+                await userManager.AddClaimAsync(user, new System.Security.Claims.Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", options.Value.EngineerEmail));
+                await userManager.AddClaimAsync(user, new System.Security.Claims.Claim("IsActive", "True"));
+
+                // Add Service Engineer to Engineer role
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(user, Roles.Engineer.ToString());
                 }
             }
         }

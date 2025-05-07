@@ -1,5 +1,5 @@
-﻿using ASC.DataAccess.Interface;
-using ASC.Model.BaseTypes;
+﻿using ASC.DataAccess.Interfaces;
+using ASC.Model;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -15,7 +15,7 @@ namespace ASC.DataAccess
 
         public Repository(DbContext _dbContext)
         {
-            this.dbContext = _dbContext;
+            dbContext = _dbContext;
         }
 
         public async Task<T> AddAsync(T entity)
@@ -24,7 +24,7 @@ namespace ASC.DataAccess
             entityToInsert.CreatedDate = DateTime.UtcNow;
             entityToInsert.UpdatedDate = DateTime.UtcNow;
             var result = dbContext.Set<T>().AddAsync(entity).Result;
-            return result.Entity;
+            return result as T;
         }
 
         public void Update(T entity)
@@ -45,12 +45,12 @@ namespace ASC.DataAccess
         public async Task<T> FindAsync(string partitionKey, string rowKey)
         {
             var result = dbContext.Set<T>().FindAsync(partitionKey, rowKey).Result;
-            return result;
+            return result as T;
         }
 
         public async Task<IEnumerable<T>> FindAllByPartitionKeyAsync(string partitionKey)
         {
-            var result = dbContext.Set<T>().Where(t => t.PartitionKey == partitionKey).ToListAsync().Result;
+            var result = dbContext.Set<T>().Where(t => t.PartitionKey.Contains(partitionKey)).ToListAsync().Result;
             return result as IEnumerable<T>;
         }
 
@@ -60,4 +60,5 @@ namespace ASC.DataAccess
             return result as IEnumerable<T>;
         }
     }
+
 }

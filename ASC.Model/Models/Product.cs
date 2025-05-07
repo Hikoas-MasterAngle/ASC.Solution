@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-
 namespace ASC.Model.Models
 {
     public class Product
@@ -13,5 +12,3 @@ namespace ASC.Model.Models
         public string Name { get; set; }
     }
 }
-
-

@@ -1,15 +1,15 @@
-﻿using ASC.WEB.Navigation;
+﻿using ASC.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ASC.WEB.Navigation
+namespace ASC.Web.Navigation
 {
-    [ViewComponent(Name = "ASC.WEB.Navigation.LeftNavigation")]
+    [ViewComponent(Name = "ASC.Web.Navigation.LeftNavigation")]
     public class LeftNavigationViewComponent : ViewComponent
     {
-        public IViewComponentResult Invoke(NavigationMenu menu)
-        {
-            menu.MenuItems = menu.MenuItems.OrderBy(p => p.Sequence).ToList();
-            return View(menu);
-        }
+            public IViewComponentResult Invoke(NavigationMenu menu)
+            {
+                menu.MenuItems = menu.MenuItems.OrderBy(p => p.Sequence).ToList();
+                return View(menu);
+            }
     }
 }

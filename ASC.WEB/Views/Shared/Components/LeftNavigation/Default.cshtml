@@ -1,6 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Http
 @using ASC.Utilities
-@model ASC.WEB.Navigation.NavigationMenu
+@model ASC.Web.Models.NavigationMenu
 @inject IHttpContextAccessor UserHttpContext
 
 @{
@@ -9,13 +9,14 @@
 
 @foreach (var menuItem in Model.MenuItems)
 {
-    if (currentUser.Roles.Intersect(menuItem.UserRoles).Any())
+    @if (currentUser.Roles.Intersect(menuItem.UserRoles).Any())
     {
         if (menuItem.IsNested)
         {
+            <li>
             <ul class="collapsible collapsible-accordion">
                 <li>
-                    <a class="collapsible-header" id="@string.Format("ancr{0}", menuItem.DisplayName.Replace(" ", ""))">
+                    <a class="collapsible-header" id="@string.Format("ancr{0}", menuItem.DisplayName.Replace(" ",""))">
                         @menuItem.DisplayName
                         <i class="material-icons">@menuItem.MaterialIcon</i>
                     </a>
@@ -26,7 +27,7 @@
                                 if (currentUser.Roles.Intersect(subMenuItem.UserRoles).Any())
                                 {
                                     <li>
-                                        <a href="@subMenuItem.Link" id="@string.Format("ancr{0}", subMenuItem.DisplayName.Replace(" ", ""))">
+                                        <a href="@subMenuItem.Link" id="@string.Format("ancr{0}", subMenuItem.DisplayName.Replace(" ",""))">
                                             @subMenuItem.DisplayName
                                             <i class="material-icons">@subMenuItem.MaterialIcon</i>
                                         </a>
@@ -37,14 +38,15 @@
                     </div>
                 </li>
             </ul>
+            </li>
         }
         else
         {
             <li>
-                <a href="@menuItem.Link" id="@string.Format("ancr{0}", menuItem.DisplayName.Replace(" ", ""))" class="collapsible-header">
-                    <i class="material-icons">@menuItem.MaterialIcon</i>
-                    @menuItem.DisplayName
-                </a>
+            <a href="@menuItem.Link" id="@string.Format("ancr{0}", menuItem.DisplayName.Replace(" ",""))" class="collapsible-header">
+                <i class="material-icons">@menuItem.MaterialIcon</i>
+                @menuItem.DisplayName
+            </a>
             </li>
         }
     }

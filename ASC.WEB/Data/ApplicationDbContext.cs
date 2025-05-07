@@ -2,13 +2,14 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace ASC.WEB.Data
+namespace ASC.Web.Data
 {
     public class ApplicationDbContext : IdentityDbContext
     {
         public virtual DbSet<MasterDataKey> MasterDataKeys { get; set; }
         public virtual DbSet<MasterDataValue> MasterDataValues { get; set; }
         public virtual DbSet<ServiceRequest> ServiceRequests { get; set; }
+        public virtual DbSet<Product> Products { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
@@ -29,5 +30,5 @@ namespace ASC.WEB.Data
             base.OnModelCreating(builder);
         }
     }
-}
 
+}

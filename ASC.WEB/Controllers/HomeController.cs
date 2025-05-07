@@ -1,48 +1,55 @@
-﻿using System.Diagnostics;
+using ASC.Web.Configuration;
+using ASC.Web.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.Options;
 using Microsoft.Extensions.Options;
-using ASC.WEB.Services;
-using Microsoft.Identity.Client;
+using System.Diagnostics;
 using ASC.Utilities;
-using ASC.WEB.Configuration;
-using ASC.WEB.Models;
-
-namespace ASC.WEB.Controllers
+namespace ASC.Web.Controllers
 {
     public class HomeController : AnonymousController
     {
         private readonly ILogger<HomeController> _logger;
-        private readonly IOptions<ApplicationSettings> _settings;
-        private readonly IEmailSender _emailSender;
 
-        public HomeController(
-            //ILogger<HomeController> logger,
-            IOptions<ApplicationSettings> settings)
-        //,IEmailSender emailSender)
+        private IOptions<ApplicationSettings> _settings;
+
+        /*public HomeController(ILogger<HomeController> logger, IOptions<ApplicationSettings> settings)
         {
-            //_logger = logger;
+            _logger = logger;
             _settings = settings;
-            //_emailSender = emailSender;
+        }*/
+        public HomeController(IOptions<ApplicationSettings> settings)
+        {
+            _settings = settings;
         }
 
         public IActionResult Index()
         {
+            /// Set Session
             HttpContext.Session.SetSession("Test", _settings.Value);
 
-            // Get Session
+            /// Get Session
             var settings = HttpContext.Session.GetSession<ApplicationSettings>("Test");
 
-            // Usage of IOptions
-            ViewBag.Title = settings.ApplicationTitle;
+            /// Usage of IOptions
+            ViewBag.Title = _settings.Value.ApplicationTitle;
 
-            //return Redirect("https://example.txt");
+
+            /// Test fail test case
+            /*ViewData.Model = "Test";
+            throw new Exception("Login Fail!!!!");*/
             return View();
+
         }
 
         public IActionResult Privacy()
         {
             return View();
         }
+        /*public IActionResult Dashboard()
+        {
+            return View();
+        }*/
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

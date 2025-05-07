@@ -25,4 +25,5 @@ namespace ASC.Model.Models
         public DateTime? CompletedDate { get; set; }
         public string ServiceEngineer { get; set; }
     }
+
 }

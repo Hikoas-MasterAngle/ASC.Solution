@@ -4,11 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ASC.Model.BaseTypes
+namespace ASC.Model
 {
-    internal class Constants
+    public static class Constants
     {
     }
+
     public enum Roles
     {
         Admin, Engineer, User
@@ -21,7 +22,7 @@ namespace ASC.Model.BaseTypes
 
     public enum Status
     {
-        New, Denied, Pending, Initiated, InProgress,
-        PendingCustomerApproval, RequestForInformation, Completed
+        New,Denied, Pending, Initiated, InProgress, PendingCustomerApproval, 
+        RequestForInformation, Completed
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ASC.Model.BaseTypes
 {
-    internal interface IAuditTracker
+    public interface IAuditTracker
     {
     }
 }
