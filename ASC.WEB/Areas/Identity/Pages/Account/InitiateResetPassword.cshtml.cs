@@ -1,13 +1,12 @@
-using ASC.Utilities;
-using ASC.Web.Services;
+﻿using ASC.Utilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using ASC.WEB.Services;
+using System.Text;
 using Microsoft.AspNetCore.WebUtilities;
 
-using System.Text;
-
-namespace ASC.Web.Areas.Identity.Pages.Account
+namespace ASC.WEB.Areas.Identity.Pages.Account
 {
     public class InitiateResetPasswordModel : PageModel
     {
@@ -20,32 +19,45 @@ namespace ASC.Web.Areas.Identity.Pages.Account
             _emailSender = emailSender;
         }
 
-
-        public void OnGet() { }
+        public void OnGet()
+        {
+        }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            // Find User
+            // Lấy Email của người dùng hiện tại
             var userEmail = HttpContext.User.GetCurrentUserDetails().Email;
             var user = await _userManager.FindByEmailAsync(userEmail);
 
-            // Generate User code
-            var code = await _userManager.GeneratePasswordResetTokenAsync(user);
-            // Encode the token for URL safety
-            var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code)); // Mã hóa token
+            // Kiểm tra User có tồn tại không
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "Email không tồn tại.");
+                return Page();
+            }
 
-            // Tạo callbackUrl với mã đã mã hóa
+            // Tạo Reset Token
+            var code = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+            // Tạo URL Reset Password
             var callbackUrl = Url.Page(
                 "/Account/ResetPassword",
                 pageHandler: null,
-                values: new { userId = user.Id, code = encodedCode }, // Sử dụng mã đã mã hóa trong URL
+                values: new { userId = user.Id, code = encodedCode },
                 protocol: Request.Scheme);
 
-            // Send Email
-            await _emailSender.SendEmailAsync(userEmail, "Reset Password", $"Please reset your password by clicking here: <a href='{callbackUrl}'>link</a>");
-            return RedirectToPage("./ResetPasswordEmailConfirmation");
+            // Debug: Kiểm tra Token và URL có đúng không
+            Console.WriteLine("Generated Reset Token: " + code);
+            Console.WriteLine("Encoded Reset Token: " + encodedCode);
+            Console.WriteLine("Reset Password Email Sent to: " + userEmail);
+            Console.WriteLine("Reset Password Link: " + callbackUrl);
+
+            // Gửi Email Reset Password
+            await _emailSender.SendEmailAsync(userEmail, "Reset Password",
+                $"Please reset your password by clicking here: <a href='{callbackUrl}'>link</a>");
+
+            return LocalRedirect("/Identity/Account/ResetPasswordEmailConfirmation");
         }
-
-
     }
 }

@@ -1,9 +1,11 @@
-﻿using ASC.DataAccess.Interfaces;
+﻿using ASC.DataAccess.Interface;
 using ASC.Model;
+using ASC.Model.BaseTypes;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -50,7 +52,7 @@ namespace ASC.DataAccess
 
         public async Task<IEnumerable<T>> FindAllByPartitionKeyAsync(string partitionKey)
         {
-            var result = dbContext.Set<T>().Where(t => t.PartitionKey.Contains(partitionKey)).ToListAsync().Result;
+            var result = dbContext.Set<T>().Where(t => t.PartitionKey == partitionKey).ToListAsync().Result;
             return result as IEnumerable<T>;
         }
 
@@ -58,6 +60,16 @@ namespace ASC.DataAccess
         {
             var result = dbContext.Set<T>().ToListAsync().Result;
             return result as IEnumerable<T>;
+        }
+        public async Task<IEnumerable<T>> FindAllByQuery(Expression<Func<T, bool>> filter)
+        {
+            var result = dbContext.Set<T>().Where(filter).ToListAsync().Result;
+            return result as IEnumerable<T>;
+        }
+
+        public Task<IEnumerable<T>> FindAllInAuditByQuery(Expression<Func<T, bool>> filter)
+        {
+            throw new NotImplementedException();
         }
     }
 

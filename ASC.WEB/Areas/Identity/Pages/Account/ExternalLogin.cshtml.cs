@@ -12,13 +12,15 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
-using ASC.Web.Services;
-using ASC.Model;
-namespace ASC.Web.Areas.Identity.Pages.Account
+using ASC.WEB.Areas.Identity.Pages.Account;
+using ASC.Model.BaseTypes;
+
+namespace ASC.WEB.Areas.Identity.Pages.Account
 {
     [AllowAnonymous]
     public class ExternalLoginModel : PageModel
@@ -27,59 +29,36 @@ namespace ASC.Web.Areas.Identity.Pages.Account
         private readonly UserManager<IdentityUser> _userManager;
         private readonly ILogger<ExternalLoginModel> _logger;
 
+
         public ExternalLoginModel(
-            SignInManager<IdentityUser> signInManager,
-            UserManager<IdentityUser> userManager,
-            ILogger<ExternalLoginModel> logger
-            )
+        SignInManager<IdentityUser> signInManager,
+        UserManager<IdentityUser> userManager,
+        ILogger<ExternalLoginModel> logger)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _logger = logger;
         }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [BindProperty]
         public InputModel Input { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public string ProviderDisplayName { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public string ReturnUrl { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [TempData]
         public string ErrorMessage { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public class InputModel
         {
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
             [Required]
             [EmailAddress]
             public string Email { get; set; }
         }
 
         public IActionResult OnGet() => RedirectToPage("./Login");
+
         public IActionResult OnPost(string provider, string returnUrl = null)
         {
             // Request a redirect to the external login provider.
@@ -88,17 +67,14 @@ namespace ASC.Web.Areas.Identity.Pages.Account
             return new ChallengeResult(provider, properties);
         }
 
-
         public async Task<IActionResult> OnGetCallbackAsync(string returnUrl = null, string remoteError = null)
         {
             returnUrl = returnUrl ?? Url.Content("~/");
-
             if (remoteError != null)
             {
-                ErrorMessage = $"Error from external provider: {remoteError}.";
+                ErrorMessage = $"Error from external provider: {remoteError}";
                 return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
             }
-
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
@@ -113,7 +89,6 @@ namespace ASC.Web.Areas.Identity.Pages.Account
                 _logger.LogInformation("{Name} logged in with {LoginProvider} provider.", info.Principal.Identity.Name, info.LoginProvider);
                 return RedirectToAction("Dashboard", "Dashboard", new { area = "ServiceRequests" });
             }
-
             if (result.IsLockedOut)
             {
                 return RedirectToPage("./Lockout");
@@ -142,65 +117,50 @@ namespace ASC.Web.Areas.Identity.Pages.Account
                 var info = await _signInManager.GetExternalLoginInfoAsync();
                 if (info == null)
                 {
-                    return RedirectToPage("/ExternalLoginFailure");
+                    return RedirectToAction("ExternalLoginFailure");
                 }
-
                 var user = new IdentityUser
                 {
                     UserName = Input.Email,
                     Email = Input.Email,
                     EmailConfirmed = true
                 };
-
                 var result = await _userManager.CreateAsync(user);
-                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", user.Email));
-                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("IsActive", "True"));
-
-                if (!result.Succeeded)
-                {
-                    result.Errors.ToList().ForEach(p => ModelState.AddModelError("", p.Description));
-                    return Page();
-                }
-
-                // Assign user to User Role
-                var roleResult = await _userManager.AddToRoleAsync(user, Roles.User.ToString());
-                if (!roleResult.Succeeded)
-                {
-                    roleResult.Errors.ToList().ForEach(p => ModelState.AddModelError("", p.Description));
-                    return Page();
-                }
-
                 if (result.Succeeded)
                 {
-                    result = await _userManager.AddLoginAsync(user, info);
-                    if (result.Succeeded)
+                    var claimsResult = await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", user.Email));
+                    var activeResult = await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("IsActive", "true"));
+                    if (claimsResult.Succeeded && activeResult.Succeeded)
                     {
-                        await _signInManager.SignInAsync(user, isPersistent: false);
-                        _logger.LogInformation(6, "User created an account using {Name} provider.", info.LoginProvider);
-                        return RedirectToAction("Dashboard", "Dashboard", new { area = "ServiceRequests" });
+                        // Assign user to User Meta
+                        var roleResult = await _userManager.AddToRoleAsync(user, Roles.User.ToString());
+                        if (roleResult.Succeeded)
+                        {
+                            await _signInManager.SignInAsync(user, isPersistent: false);
+                            _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
+                            return RedirectToAction("Dashboard", "Dashboard", new { area = "ServiceRequests" });
+                        }
+                        foreach (var error in roleResult.Errors)
+                        {
+                            ModelState.AddModelError(string.Empty, error.Description);
+                            return Page();
+                        }
+                    }
+                    foreach (var error in claimsResult.Errors.Concat(activeResult.Errors))
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                        return Page();
                     }
                 }
-
-                ModelState.AddModelError(string.Empty, result.ToString());
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                    return Page();
+                }
             }
 
             ViewData["ReturnUrl"] = returnUrl;
             return Page();
-        }
-
-
-        private IdentityUser CreateUser()
-        {
-            try
-            {
-                return Activator.CreateInstance<IdentityUser>();
-            }
-            catch
-            {
-                throw new InvalidOperationException($"Can't create an instance of '{nameof(IdentityUser)}'. " +
-                    $"Ensure that '{nameof(IdentityUser)}' is not an abstract class and has a parameterless constructor, or alternatively " +
-                    $"override the external login page in /Areas/Identity/Pages/Account/ExternalLogin.cshtml");
-            }
         }
     }
 }

@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace ASC.Web.Controllers
+namespace ASC.WEB.Controllers
 {
     public class AnonymousController : Controller
     {
+        
+        
     }
 }

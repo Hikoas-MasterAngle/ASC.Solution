@@ -1,4 +1,4 @@
-﻿namespace ASC.Web.Services
+﻿namespace ASC.WEB.Services
 {
     public interface ISmsSender
     {

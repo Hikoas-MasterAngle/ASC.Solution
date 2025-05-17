@@ -1,11 +1,13 @@
-﻿using ASC.Web.Configuration;
+﻿using ASC.WEB.Configuration;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-
-namespace ASC.Web.Data
+namespace ASC.WEB.Data
 {
     public interface IIdentitySeed
     {
-        Task Seed(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, IOptions<ApplicationSettings> options);
+        Task Seed(UserManager<IdentityUser> userManager,
+                  RoleManager<IdentityRole> roleManager,
+                  IOptions<ApplicationSettings> options);
     }
 }

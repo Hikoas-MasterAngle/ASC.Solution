@@ -1,7 +1,9 @@
 ﻿@using Microsoft.AspNetCore.Identity;
 @using System.Security.Claims;
-@model ASC.Web.Areas.Accounts.Models.CustomerViewModel
-@inject UserManager<IdentityUser> UserManager;
+
+@model ASC.WEB.Areas.Accounts.Models.CustomerViewModel
+@inject UserManager<IdentityUser> userManager;
+
 @{
     Layout = "_SecureLayout";
 }
@@ -31,25 +33,21 @@
                             <th data-field="Actions">Edit User</th>
                         </tr>
                     </thead>
-
                     <tbody>
                         @foreach (var user in Model.Customers)
                         {
-                            var identity = await UserManager.GetClaimsAsync(user);
+                            var identity = await userManager.GetClaimsAsync(user);
                             <tr>
+                                <td>@user.Email</td>
+                                <td>@user.UserName</td>
                                 <td>
-                                    @user.Email
-                                </td>
-                                <td>
-                                    @(Boolean.Parse(identity.SingleOrDefault(p => p.Type == "IsActive").Value))
+                                    @Boolean.Parse(identity.SingleOrDefault(p => p.Type == "IsActive").Value)
                                 </td>
                                 <td>
                                     <img src="@(Boolean.Parse(identity.SingleOrDefault(p => p.Type == "IsActive").Value) ? "/images/green_tick.png" : "/images/red_cross.png")" />
                                 </td>
                                 <td>
-                                    <i class="small material-icons edit cursor-hand">
-                                        mode_edit
-                                    </i>
+                                    <i class="small material-icons edit cursor-hand">mode_edit</i>
                                 </td>
                             </tr>
                         }
@@ -58,17 +56,17 @@
             }
             else
             {
-                @*In case of No Records, display no records message*@
+                // In case of no records, display no records message
                 <div class="card blue-grey lighten-1">
                     <div class="card-content white-text">
-                        <span class="card-title">No Service Engineers!!!</span>
+                        <span class="card-title">Service Engineers!</span>
                         <p>
-                            No Service Engineer found, please add a Service Engineer to system.
+                            No Service Engineers found, please add a Service Engineer to system.
                         </p>
                     </div>
                 </div>
             }
-
+        </div>
             <div class="row"></div>
 
             @*Details Section*@

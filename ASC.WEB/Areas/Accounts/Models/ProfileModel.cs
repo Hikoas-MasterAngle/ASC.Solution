@@ -1,5 +1,5 @@
-﻿// ✅ Phải là đúng như sau:
-namespace ASC.Web.Areas.Accounts.Models
+﻿
+namespace ASC.WEB.Areas.Accounts.Models
 {
     public class ProfileModel
     {

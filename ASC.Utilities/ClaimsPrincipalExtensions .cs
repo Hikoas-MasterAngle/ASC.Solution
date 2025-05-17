@@ -14,12 +14,20 @@ namespace ASC.Utilities
             if (!principal.Claims.Any())
                 return null;
 
+            var isActiveValue = principal.Claims.FirstOrDefault(c => c.Type == "IsActive")?.Value;
+            bool isActive = false;
+
+            if (!string.IsNullOrWhiteSpace(isActiveValue))
+            {
+                Boolean.TryParse(isActiveValue, out isActive);
+            }
+
             return new CurrentUser
             {
                 Name = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value,
                 Email = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value,
                 Roles = principal.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToArray(),
-                IsActive = Boolean.Parse(principal.Claims.Where(c => c.Type == "IsActive").Select(c => c.Value).SingleOrDefault())
+                IsActive = isActive
             };
         }
     }

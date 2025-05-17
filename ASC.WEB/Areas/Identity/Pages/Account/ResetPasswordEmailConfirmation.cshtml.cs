@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace ASC.Web.Areas.Identity.Pages.Account
+namespace ASC.WEB.Areas.Identity.Pages.Account
 {
     public class ResetPasswordEmailConfirmationModel : PageModel
     {

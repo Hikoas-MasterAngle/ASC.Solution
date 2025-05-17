@@ -1,7 +1,10 @@
-﻿using ASC.Model.Models;
+﻿using ASC.Model.BaseTypes;
+using ASC.Model.Models;
+using ASC.WEB.Areas.Configuration.Models;
+using ASC.WED.Areas.Configuration.Models;
 using AutoMapper;
 
-namespace ASC.Web.Areas.Configuration.Models
+namespace ASC.WEB.Areas.Configuration.Models
 {
     public class MappingProfile : Profile
     {
@@ -13,4 +16,6 @@ namespace ASC.Web.Areas.Configuration.Models
             CreateMap<MasterDataValueViewModel, MasterDataValue>();
         }
     }
+
 }
+    

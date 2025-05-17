@@ -1,9 +1,5 @@
 ﻿using ASC.Model.BaseTypes;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ASC.Model.Models
 {
@@ -21,9 +17,14 @@ namespace ASC.Model.Models
         public string VehicleType { get; set; }
         public string Status { get; set; }
         public string RequestedServices { get; set; }
-        public DateTime? RequestedDate { get; set; }
+        public DateTime RequestedDate { get; set; }
         public DateTime? CompletedDate { get; set; }
-        public string ServiceEngineer { get; set; }
-    }
+        public string? ServiceEngineer { get; set; }
 
+        // ✅ Bổ sung các trường bắt buộc với DB
+        public string CreatedBy { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public string UpdatedBy { get; set; }
+        public DateTime UpdatedDate { get; set; }
+    }
 }

@@ -1,24 +1,59 @@
-﻿using ASC.WEB.Configuration;
-using ASC.WEB.Controllers;
+﻿using ASC.Business.Interfaces;
+using ASC.Model.BaseTypes;
+using ASC.Model.Models;
+using ASC.Utilities;
+using ASC.WEB.Areas.ServiceRequests.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace ASC.Web.Areas.ServiceRequests.Controllers
+namespace ASC.WEB.Areas.ServiceRequests.Controllers
 {
     [Area("ServiceRequests")]
-    public class DashboardController : BaseController
+    public class DashboardController : Controller
     {
-        private IOptions<ApplicationSettings> _settings;
+        private readonly IServiceRequestOperations _serviceRequestOperations;
 
-        public DashboardController(IOptions<ApplicationSettings> settings)
+        public DashboardController(IServiceRequestOperations operations)
         {
-            _settings = settings;
+            _serviceRequestOperations = operations;
         }
 
-        public IActionResult Dashboard()
+        public async Task<IActionResult> Dashboard()
         {
-            return View();
+            var status = new List<string>
+            {
+                Status.New.ToString(),
+                Status.InProgress.ToString(),
+                Status.Initiated.ToString(),
+                Status.RequestForInformation.ToString()
+            };
+
+            var email = HttpContext.User.GetCurrentUserDetails().Email;
+            List<ServiceRequest> serviceRequests = new List<ServiceRequest>();
+
+            if (HttpContext.User.IsInRole(Roles.Admin.ToString()))
+            {
+                // ✅ Không lọc theo RequestedDate
+                serviceRequests = await _serviceRequestOperations.GetServiceRequestsByRequestedDateAndStatus(
+                    null, status);
+            }
+            else if (HttpContext.User.IsInRole(Roles.Engineer.ToString()))
+            {
+                serviceRequests = await _serviceRequestOperations.GetServiceRequestsByRequestedDateAndStatus(
+                    null, status, serviceEngineerEmail: email);
+            }
+            else
+            {
+                serviceRequests = await _serviceRequestOperations.GetServiceRequestsByRequestedDateAndStatus(
+                    null, null, email: email);
+            }
+
+            return View(new DashboardViewModel
+            {
+                ServiceRequests = serviceRequests.OrderByDescending(p => p.RequestedDate).ToList()
+            });
         }
     }
 }
-

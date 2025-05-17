@@ -1,21 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using ASC.Web.Services;
-using ASC.Web.Areas.Accounts.Models;
+using ASC.WEB.Services;
+using ASC.Model.BaseTypes;
+using ASC.WEB.Areas.Accounts.Models;
 using ASC.Utilities;
+using Microsoft.Win32;
 
-namespace ASC.Web.Areas.Accounts.Controllers
+
+namespace ASC.WEB.Areas.Accounts.Controllers
 {
     [Authorize]
     [Area("Accounts")]
     public class AccountController : Controller
     {
+        // 1 reference
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IEmailSender _emailSender;
         private readonly SignInManager<IdentityUser> _signInManager;
@@ -27,22 +26,18 @@ namespace ASC.Web.Areas.Accounts.Controllers
             _signInManager = signInManager;
         }
 
-        // GET: /Accounts/Index
         public IActionResult Index()
         {
             return View();
         }
 
-        // GET: /Accounts/ServiceEngineers
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> ServiceEngineers()
         {
             var serviceEngineers = await _userManager.GetUsersInRoleAsync(Roles.Engineer.ToString());
-
             // Hold all service engineers in session
             HttpContext.Session.SetSession("ServiceEngineers", serviceEngineers);
-
             return View(new ServiceEngineerViewModel
             {
                 ServiceEngineers = serviceEngineers == null ? null : serviceEngineers.ToList(),
@@ -50,10 +45,10 @@ namespace ASC.Web.Areas.Accounts.Controllers
             });
         }
 
-        // POST: /Accounts/ServiceEngineers
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
+        // 0 references
         public async Task<IActionResult> ServiceEngineers(ServiceEngineerViewModel serviceEngineer)
         {
             serviceEngineer.ServiceEngineers = HttpContext.Session.GetSession<List<IdentityUser>>("ServiceEngineers");
@@ -68,7 +63,6 @@ namespace ASC.Web.Areas.Accounts.Controllers
                 var user = await _userManager.FindByEmailAsync(serviceEngineer.Registration.Email);
                 user.UserName = serviceEngineer.Registration.UserName;
                 IdentityResult result = await _userManager.UpdateAsync(user);
-
                 if (!result.Succeeded)
                 {
                     result.Errors.ToList().ForEach(p => ModelState.AddModelError("", p.Description));
@@ -78,7 +72,6 @@ namespace ASC.Web.Areas.Accounts.Controllers
                 // Update Password
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
                 IdentityResult passwordResult = await _userManager.ResetPasswordAsync(user, token, serviceEngineer.Registration.Password);
-
                 if (!passwordResult.Succeeded)
                 {
                     passwordResult.Errors.ToList().ForEach(p => ModelState.AddModelError("", p.Description));
@@ -88,7 +81,7 @@ namespace ASC.Web.Areas.Accounts.Controllers
                 // Update claims
                 user = await _userManager.FindByEmailAsync(serviceEngineer.Registration.Email);
                 var identity = await _userManager.GetClaimsAsync(user);
-                var isActiveClaim = identity.SingleOrDefault(p => p.Type == "IsActive");
+                var isActiveClaim = identity.FirstOrDefault(p => p.Type == "IsActive");
                 var removeClaimResult = await _userManager.RemoveClaimAsync(user, new System.Security.Claims.Claim(isActiveClaim.Type, isActiveClaim.Value));
                 var addClaimResult = await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim(isActiveClaim.Type, serviceEngineer.Registration.IsActive.ToString()));
             }
@@ -101,18 +94,15 @@ namespace ASC.Web.Areas.Accounts.Controllers
                     Email = serviceEngineer.Registration.Email,
                     EmailConfirmed = true
                 };
-
                 IdentityResult result = await _userManager.CreateAsync(user, serviceEngineer.Registration.Password);
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", serviceEngineer.Registration.Email));
                 await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("IsActive", serviceEngineer.Registration.IsActive.ToString()));
-
                 if (!result.Succeeded)
                 {
                     result.Errors.ToList().ForEach(p => ModelState.AddModelError("", p.Description));
                     return View(serviceEngineer);
                 }
 
-                // Assign user to Engineer Role
                 var roleResult = await _userManager.AddToRoleAsync(user, Roles.Engineer.ToString());
                 if (!roleResult.Succeeded)
                 {
@@ -124,25 +114,17 @@ namespace ASC.Web.Areas.Accounts.Controllers
             if (serviceEngineer.Registration.IsActive)
             {
                 await _emailSender.SendEmailAsync(serviceEngineer.Registration.Email, "Account Created/Modified",
-                $"Email : {serviceEngineer.Registration.Email} /n Password : {serviceEngineer.Registration.Password}");
+                $"Email : {serviceEngineer.Registration.Email} /n Passowrd: {serviceEngineer.Registration.Password}");
             }
             else
             {
-                await _emailSender.SendEmailAsync(serviceEngineer.Registration.Email, "Account Deactivated", $"Your account has been deactivated.");
+                await _emailSender.SendEmailAsync(serviceEngineer.Registration.Email, "Account Deactivated", "Your account has been deactivated.");
             }
 
             return RedirectToAction("ServiceEngineers");
         }
 
-        #region Helpers
 
-        private void AddErrors(IdentityResult result)
-        {
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
-        }
         [HttpGet]
         public async Task<IActionResult> Customers()
         {
@@ -155,6 +137,7 @@ namespace ASC.Web.Areas.Accounts.Controllers
                 Registration = new CustomerRegistrationViewModel() { IsEdit = false }
             });
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Customers(CustomerViewModel customer)
@@ -169,11 +152,13 @@ namespace ASC.Web.Areas.Accounts.Controllers
             {
                 // Update User
                 // Update claims IsActive
+
                 var user = await _userManager.FindByEmailAsync(customer.Registration.Email);
                 var identity = await _userManager.GetClaimsAsync(user);
                 var isActiveClaim = identity.SingleOrDefault(p => p.Type == "IsActive");
                 var removeClaimResult = await _userManager.RemoveClaimAsync(user, new System.Security.Claims.Claim(isActiveClaim.Type, isActiveClaim.Value));
                 var addClaimResult = await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim(isActiveClaim.Type, customer.Registration.IsActive.ToString()));
+
             }
 
             if (customer.Registration.IsActive)
@@ -187,14 +172,33 @@ namespace ASC.Web.Areas.Accounts.Controllers
             return RedirectToAction("Customers");
         }
 
-        #endregion
-    }
+        [HttpGet]
+        public IActionResult Profile()
+        {
+            var user = HttpContext.User.GetCurrentUserDetails();
+            return View(new ProfileModel() { UserName = user.Name });
+        }
 
-    // Enum definition
-    public enum Roles
-    {
-        Admin,
-        Engineer,
-        User
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Profile(ProfileModel profile)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View();
+            }
+
+            var user = await _userManager.FindByEmailAsync(HttpContext.User.GetCurrentUserDetails().Email);
+            user.UserName = profile.UserName;
+            IdentityResult result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                result.Errors.ToList().ForEach(p => ModelState.AddModelError("", p.Description));
+                return View();
+            }
+
+            await _signInManager.RefreshSignInAsync(user);
+            return RedirectToAction("Dashboard", "Dashboard", new { area = "ServiceRequests" });
+        }
     }
 }

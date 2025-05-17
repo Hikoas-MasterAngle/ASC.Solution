@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ASC.Web.Areas.Accounts.Models
+namespace ASC.WEB.Areas.Accounts.Models
 {
     public class CustomerRegistrationViewModel
     {
@@ -9,11 +9,10 @@ namespace ASC.Web.Areas.Accounts.Models
         [Display(Name = "Email")]
         public string Email { get; set; }
 
-        public string ? UserName { get; set; }
+        public string UserName { get; set; }
 
         public bool IsEdit { get; set; }
 
         public bool IsActive { get; set; }
-
     }
 }

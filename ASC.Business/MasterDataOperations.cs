@@ -1,5 +1,5 @@
 ﻿using ASC.Business.Interfaces;
-using ASC.DataAccess.Interfaces;
+using ASC.DataAccess.Interface;
 using ASC.Model;
 using ASC.Model.Models;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -46,7 +46,6 @@ namespace ASC.Business
         {
             try
             {
-                key = key ?? "";
                 var masterValues = await _unitOfWork.Repository<MasterDataValue>().FindAllByPartitionKeyAsync(key);
                 return masterValues.ToList();
             }
@@ -67,7 +66,7 @@ namespace ASC.Business
             using (_unitOfWork)
             {
                 await _unitOfWork.Repository<MasterDataValue>().AddAsync(value);
-                _unitOfWork.CommitTransaction(); 
+                _unitOfWork.CommitTransaction();
                 return true;
             }
         }
@@ -81,8 +80,8 @@ namespace ASC.Business
                 masterKey.IsDeleted = key.IsDeleted;
                 masterKey.Name = key.Name;
 
-                _unitOfWork.Repository<MasterDataKey>().Update(masterKey); 
-                _unitOfWork.CommitTransaction(); 
+                _unitOfWork.Repository<MasterDataKey>().Update(masterKey);
+                _unitOfWork.CommitTransaction();
                 return true;
             }
         }
@@ -91,13 +90,13 @@ namespace ASC.Business
         {
             using (_unitOfWork)
             {
-                var masterValue = await _unitOfWork.Repository<MasterDataValue>().FindAsync(originalPartitionKey, originalRowKey); 
+                var masterValue = await _unitOfWork.Repository<MasterDataValue>().FindAsync(originalPartitionKey, originalRowKey);
                 masterValue.IsActive = value.IsActive;
                 masterValue.IsDeleted = value.IsDeleted;
                 masterValue.Name = value.Name;
 
                 _unitOfWork.Repository<MasterDataValue>().Update(masterValue);
-                _unitOfWork.CommitTransaction(); 
+                _unitOfWork.CommitTransaction();
                 return true;
             }
         }
@@ -114,11 +113,11 @@ namespace ASC.Business
                 foreach (var value in values)
                 {
                     var masterKey = await GetMasterKeyByNameAsync(value.PartitionKey);
-                    if (!masterKey.Any()) 
+                    if (!masterKey.Any())
                     {
                         await _unitOfWork.Repository<MasterDataKey>().AddAsync(new MasterDataKey()
                         {
-                            Name = value.PartitionKey, 
+                            Name = value.PartitionKey,
                             RowKey = Guid.NewGuid().ToString(),
                             PartitionKey = value.PartitionKey,
                         });
@@ -135,14 +134,14 @@ namespace ASC.Business
                     {
                         masterValue.IsActive = value.IsActive;
                         masterValue.IsDeleted = value.IsDeleted;
-                        masterValue.Name = value.Name; 
+                        masterValue.Name = value.Name;
                         _unitOfWork.Repository<MasterDataValue>().Update(masterValue);
                     }
-                    _unitOfWork.CommitTransaction();
-                } 
+                }
 
+                _unitOfWork.CommitTransaction();
                 return true;
-            } 
+            }
         }
 
     }

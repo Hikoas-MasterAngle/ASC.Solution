@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ASC.Web.Areas.Accounts.Models
+namespace ASC.WEB.Areas.Accounts.Models
 {
     public class ServiceEngineerRegistrationViewModel
     {

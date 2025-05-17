@@ -15,19 +15,23 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 
-namespace ASC.Web.Areas.Identity.Pages.Account
+namespace ASC.WEB.Areas.Identity.Pages.Account
 {
+    [AllowAnonymous]
     public class LoginModel : PageModel
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
 
-        public LoginModel(SignInManager<IdentityUser> signInManager, ILogger<LoginModel> logger, UserManager<IdentityUser> userManager)
+        public LoginModel(
+            SignInManager<IdentityUser> signInManager,
+            ILogger<LoginModel> logger,
+            UserManager<IdentityUser> userManager)
         {
+            _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
-            _userManager = userManager;
         }
 
         /// <summary>
@@ -62,26 +66,14 @@ namespace ASC.Web.Areas.Identity.Pages.Account
         /// </summary>
         public class InputModel
         {
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
             [Required]
             [EmailAddress]
             public string Email { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
             [Required]
             [DataType(DataType.Password)]
             public string Password { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
             [Display(Name = "Remember me?")]
             public bool RememberMe { get; set; }
         }
@@ -102,10 +94,9 @@ namespace ASC.Web.Areas.Identity.Pages.Account
 
             ReturnUrl = returnUrl;
         }
-
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
-            /*returnUrl = returnUrl ?? Url.Content("~/");*/
+            // returnUrl = returnUrl ?? Url.Content("~/");
 
             if (ModelState.IsValid)
             {
@@ -126,18 +117,17 @@ namespace ASC.Web.Areas.Identity.Pages.Account
 
                 var result = await _signInManager.PasswordSignInAsync(user.UserName, Input.Password, Input.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
-                    if(result.Succeeded)
-                    {
-                    _logger.LogInformation("User logged in.");
-                    if(!String.IsNullOrWhiteSpace(returnUrl))
-                            return RedirectToAction(returnUrl);
-                    else 
-                            return RedirectToAction("Dashboard", "Dashboard", new { Area = "ServiceRequests"});
-                    }
+                {
+                    _logger.LogInformation(1, "User logged in.");
+                    if (!string.IsNullOrWhiteSpace(returnUrl))
+                        return RedirectToAction(returnUrl);
+                    else
+                        return RedirectToAction("Dashboard", "Dashboard", new { Area = "ServiceRequests" });
+                }
 
                 if (result.RequiresTwoFactor)
                 {
-                    return RedirectToPage("./LoginWith2FA", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
+                    return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
                 }
 
                 if (result.IsLockedOut)
@@ -148,11 +138,13 @@ namespace ASC.Web.Areas.Identity.Pages.Account
                 else
                 {
                     ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                    return Page();
                 }
             }
 
+            // If we got this far, something failed, redisplay form
             return Page();
         }
+
+
     }
 }
